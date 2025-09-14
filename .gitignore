@@ -1,0 +1,29 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go binaries
+go-bin/
+
+# Dependency directories (remove if using modules)
+vendor/
+
+# Go module cache
+go.sum
+go.mod
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
