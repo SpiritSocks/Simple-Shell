@@ -96,12 +96,10 @@ func parseArgs(input string) ([]string, error) {
 		current.WriteRune(rune(char))
 	}
 
-	// Добавляем последний аргумент
 	if current.Len() > 0 {
 		args = append(args, current.String())
 	}
 
-	// Если остались незакрытые кавычки — ошибка
 	if inQuotes {
 		return nil, errors.New("unmatched quote")
 	}
