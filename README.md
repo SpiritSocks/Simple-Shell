@@ -10,4 +10,5 @@
 
 Пример:
 ***@**.local:~$ ls -l
+
 Command: ls, Arguments: [-l]
