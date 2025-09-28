@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"os"
@@ -9,8 +10,7 @@ import (
 	"strings"
 )
 
-// ExecInput исполняет одну строку ввода.
-// На Этапе 1 команды ls и cd сделаны заглушками.
+// ExecInput: обработка одной команды (ls/cd как заглушки; exit завершает процесс)
 func ExecInput(input string) error {
 	input = strings.TrimSpace(input)
 	if input == "" {
@@ -41,7 +41,6 @@ func ExecInput(input string) error {
 		os.Exit(0)
 	}
 
-	// остальные команды — пробуем запустить через exec
 	cmd := exec.Command(args[0], args[1:]...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -59,39 +58,69 @@ func ExecInput(input string) error {
 	return nil
 }
 
-// GetHostAndUser -> (username, hostname) для приглашения
-func GetHostAndUser() (string, string) {
-	currUser, err := osuser.Current()
+// ExecScript: выполнить стартовый скрипт с эхо и остановкой на первой ошибке
+func ExecScript(scriptPath, prompt string) error {
+	f, err := os.Open(scriptPath)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Ошибка получения пользователя: %v\n", err)
-		return "", ""
+		return fmt.Errorf("script: %w", err)
 	}
-	hostName, err := os.Hostname()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Ошибка получения hostname: %v\n", err)
-		return "", ""
+	defer f.Close()
+
+	sc := bufio.NewScanner(f)
+	lineNo := 0
+	for sc.Scan() {
+		lineNo++
+		line := sc.Text()
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+
+		// эхо "как в консоли"
+		fmt.Printf("%s%s\n", prompt, line)
+
+		if err := ExecInput(line); err != nil {
+			fmt.Fprintf(os.Stderr, "error on line %d: %v\n", lineNo, err)
+			return err
+		}
 	}
-	username := currUser.Username
-	return username, hostName
+	if err := sc.Err(); err != nil {
+		return fmt.Errorf("script read error: %w", err)
+	}
+	return nil
 }
 
-// Парсер с кавычками и экранированием
+// GetHostAndUser -> (username, hostname) для приглашения
+func GetHostAndUser() (string, string) {
+	u, err := osuser.Current()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "user error: %v\n", err)
+		return "", ""
+	}
+	h, err := os.Hostname()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "host error: %v\n", err)
+		return "", ""
+	}
+	return u.Username, h
+}
+
+// parseArgs: парсер с кавычками и экранированием
 func parseArgs(input string) ([]string, error) {
 	var args []string
-	var current strings.Builder
+	var cur strings.Builder
 	inQuotes := false
-	escapeNext := false
+	escape := false
 
 	for i := 0; i < len(input); i++ {
 		ch := input[i]
 
-		if escapeNext {
-			current.WriteByte(ch)
-			escapeNext = false
+		if escape {
+			cur.WriteByte(ch)
+			escape = false
 			continue
 		}
 		if ch == '\\' {
-			escapeNext = true
+			escape = true
 			continue
 		}
 		if ch == '"' {
@@ -99,16 +128,16 @@ func parseArgs(input string) ([]string, error) {
 			continue
 		}
 		if ch == ' ' && !inQuotes {
-			if current.Len() > 0 {
-				args = append(args, current.String())
-				current.Reset()
+			if cur.Len() > 0 {
+				args = append(args, cur.String())
+				cur.Reset()
 			}
 			continue
 		}
-		current.WriteByte(ch)
+		cur.WriteByte(ch)
 	}
-	if current.Len() > 0 {
-		args = append(args, current.String())
+	if cur.Len() > 0 {
+		args = append(args, cur.String())
 	}
 	if inQuotes {
 		return nil, errors.New("unmatched quote")
