@@ -1,8 +1,10 @@
-echo "hello from script"
-ls "docs folder"
-cd /tmp
-unknowncmd
-echo "won't print"
-
-
-# go run ./cmd/emulator -vfs ./vfs -script ./script/start.sh
+ls
+cd home
+ls
+cd user
+pwd
+ls
+cd ..
+cd ..
+cd etc
+ls
