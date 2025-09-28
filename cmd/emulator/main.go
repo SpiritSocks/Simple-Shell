@@ -6,35 +6,45 @@ import (
 	"fmt"
 	"os"
 
-	"go.mod/internal/commands"
+	"var27_shell/internal/commands"
+	"var27_shell/internal/vfs"
 )
 
 func main() {
-	// --- Этап 2: флаги конфигурации ---
+	// Этап 2+3: флаги
 	var vfsPath string
 	var scriptPath string
-	flag.StringVar(&vfsPath, "vfs", "", "Path to physical VFS location")
-	flag.StringVar(&scriptPath, "script", "", "Path to startup script file")
+	flag.StringVar(&vfsPath, "vfs", "", "Path to physical VFS directory")
+	flag.StringVar(&scriptPath, "script", "", "Path to startup script")
 	flag.Parse()
 
-	// Отладочный вывод конфигурации
+	// Инициализация VFS (теперь из пакета vfs, а не commands)
+	if err := vfs.Init(vfsPath); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	// Отладка конфигурации (требование Этапа 2)
 	fmt.Printf("conf: vfs_path=%q, start_script=%q\n", vfsPath, scriptPath)
 
-	// --- REPL: приглашение ---
 	username, hostname := commands.GetHostAndUser()
-	prompt := fmt.Sprintf("%s@%s:~$ ", username, hostname)
 
-	// Если указан стартовый скрипт — выполняем, останавливаемся при первой ошибке
+	// Показываем текущий виртуальный путь вместо "~"
+	prompt := func() string {
+		return fmt.Sprintf("%s@%s:%s$ ", username, hostname, vfs.Pwd())
+	}
+
+	// Если есть стартовый скрипт — выполняем до REPL
 	if scriptPath != "" {
-		if err := commands.ExecScript(scriptPath, prompt); err != nil {
-			os.Exit(1)
+		if err := commands.ExecScript(scriptPath, prompt()); err != nil {
+			os.Exit(1) // остановка при первой ошибке
 		}
 	}
 
-	// --- REPL-цикл ---
+	// REPL
 	reader := bufio.NewReader(os.Stdin)
 	for {
-		fmt.Print(prompt)
+		fmt.Print(prompt())
 		input, err := reader.ReadString('\n')
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)

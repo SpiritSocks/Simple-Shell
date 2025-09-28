@@ -2,15 +2,29 @@ package commands
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	osuser "os/user"
 	"strings"
+	"var27_shell/internal/vfs"
 )
 
-// ExecInput: обработка одной команды (ls/cd как заглушки; exit завершает процесс)
+// GetHostAndUser -> (username, hostname) для приглашения
+func GetHostAndUser() (string, string) {
+	u, err := osuser.Current()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "user error: %v\n", err)
+		return "", ""
+	}
+	h, err := os.Hostname()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "host error: %v\n", err)
+		return "", ""
+	}
+	return u.Username, h
+}
+
 func ExecInput(input string) error {
 	input = strings.TrimSpace(input)
 	if input == "" {
@@ -26,36 +40,39 @@ func ExecInput(input string) error {
 	}
 
 	switch args[0] {
-	case "cd":
-		if len(args) < 2 {
-			return errors.New("cd: path required")
-		}
-		fmt.Printf("cd %s\n", strings.Join(args[1:], " "))
+	case "pwd":
+		fmt.Println(vfs.Pwd())
 		return nil
 
+	case "cd":
+		target := "."
+		if len(args) >= 2 {
+			target = strings.Join(args[1:], " ")
+		}
+		return vfs.Cd(target)
+
 	case "ls":
-		fmt.Printf("ls %s\n", strings.Join(args[1:], " "))
+		target := "."
+		if len(args) >= 2 {
+			target = strings.Join(args[1:], " ")
+		}
+		entries, err := vfs.Ls(target)
+		if err != nil {
+			return err
+		}
+		for _, e := range entries {
+			fmt.Println(e)
+		}
 		return nil
 
 	case "exit":
 		os.Exit(0)
 	}
-
+	// остальные — хостовые команды
 	cmd := exec.Command(args[0], args[1:]...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		var ee *exec.Error
-		if errors.As(err, &ee) {
-			return fmt.Errorf("unknown command: %s", args[0])
-		}
-		var xe *exec.ExitError
-		if errors.As(err, &xe) {
-			return fmt.Errorf("%s: exited with status %d", args[0], xe.ExitCode())
-		}
-		return err
-	}
-	return nil
+	return cmd.Run()
 }
 
 // ExecScript: выполнить стартовый скрипт с эхо и остановкой на первой ошибке
@@ -87,60 +104,4 @@ func ExecScript(scriptPath, prompt string) error {
 		return fmt.Errorf("script read error: %w", err)
 	}
 	return nil
-}
-
-// GetHostAndUser -> (username, hostname) для приглашения
-func GetHostAndUser() (string, string) {
-	u, err := osuser.Current()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "user error: %v\n", err)
-		return "", ""
-	}
-	h, err := os.Hostname()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "host error: %v\n", err)
-		return "", ""
-	}
-	return u.Username, h
-}
-
-// parseArgs: парсер с кавычками и экранированием
-func parseArgs(input string) ([]string, error) {
-	var args []string
-	var cur strings.Builder
-	inQuotes := false
-	escape := false
-
-	for i := 0; i < len(input); i++ {
-		ch := input[i]
-
-		if escape {
-			cur.WriteByte(ch)
-			escape = false
-			continue
-		}
-		if ch == '\\' {
-			escape = true
-			continue
-		}
-		if ch == '"' {
-			inQuotes = !inQuotes
-			continue
-		}
-		if ch == ' ' && !inQuotes {
-			if cur.Len() > 0 {
-				args = append(args, cur.String())
-				cur.Reset()
-			}
-			continue
-		}
-		cur.WriteByte(ch)
-	}
-	if cur.Len() > 0 {
-		args = append(args, cur.String())
-	}
-	if inQuotes {
-		return nil, errors.New("unmatched quote")
-	}
-	return args, nil
 }
