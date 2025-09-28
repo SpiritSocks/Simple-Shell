@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"go.mod/commands"
+	"go.mod/internal/commands"
 )
 
 func main() {
