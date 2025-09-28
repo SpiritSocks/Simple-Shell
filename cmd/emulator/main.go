@@ -9,20 +9,19 @@ import (
 )
 
 func main() {
-
-	user, host := commands.GetHostAndUser()
+	username, hostname := commands.GetHostAndUser()
+	prompt := fmt.Sprintf("%s@%s:~$ ", username, hostname)
 
 	reader := bufio.NewReader(os.Stdin)
 	for {
-		fmt.Printf("%s@%s:~$ ", user, host)
+		fmt.Print(prompt)
 		input, err := reader.ReadString('\n')
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
+			continue
 		}
-
 		if err = commands.ExecInput(input); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 		}
 	}
-
 }
