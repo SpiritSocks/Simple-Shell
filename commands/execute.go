@@ -22,15 +22,17 @@ func ExecInput(input string) error {
 	}
 
 	switch args[0] {
+	case "ls":
+    	fmt.Printf("Command: ls, Arguments: %v\n", args[1:])
+    	return nil
 	case "cd":
-		if len(args) < 2 {
+    	if len(args) < 2 {
 			return errors.New("path required")
 		}
-		return os.Chdir(args[1])
-
+    	fmt.Printf("Command: cd, Arguments: %v\n", args[1:])
+    	return nil
 	case "exit":
 		os.Exit(0)
-
 	default:
 		cmd := exec.Command(args[0], args[1:]...)
 		cmd.Stdout = os.Stdout
