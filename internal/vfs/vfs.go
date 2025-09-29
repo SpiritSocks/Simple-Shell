@@ -56,7 +56,7 @@ func Pwd() string {
 
 // Cd — перейти в директорию
 func Cd(path string) error {
-	node, fullPath, err := resolve(path)
+	node, fullPath, err := Resolve(path)
 	if err != nil {
 		return err
 	}
@@ -70,7 +70,7 @@ func Cd(path string) error {
 
 // Ls — список содержимого
 func Ls(path string) ([]string, error) {
-	node, _, err := resolve(path)
+	node, _, err := Resolve(path)
 	if err != nil {
 		return nil, err
 	}
@@ -94,16 +94,16 @@ func Ls(path string) ([]string, error) {
 
 // --- helpers ---
 
-// resolve — найти узел по пути
-func resolve(path string) (*Node, string, error) {
+// найти узел по пути
+func Resolve(path string) (*Node, string, error) {
 	if root == nil {
 		return nil, "", errors.New("vfs not initialized")
 	}
 	var parts []string
 	if strings.HasPrefix(path, "/") {
-		parts = splitPath(path)
+		parts = SplitPath(path)
 	} else {
-		parts = append(splitPath(cwdPath), splitPath(path)...)
+		parts = append(SplitPath(cwdPath), SplitPath(path)...)
 	}
 	cur := root
 	fullPath := "/"
@@ -131,18 +131,19 @@ func resolve(path string) (*Node, string, error) {
 	return cur, fullPath, nil
 }
 
-func splitPath(p string) []string {
+func SplitPath(p string) []string {
 	return strings.Split(filepath.Clean(p), string(os.PathSeparator))
 }
 
-// DecodeFile — пример: получить содержимое файла
+// получить содержимое файла
 func DecodeFile(n *Node) (string, error) {
 	if n.IsDir {
-		return "", errors.New("not a file")
+		return "", fmt.Errorf("%s is a directory", n.Name)
 	}
 	data, err := base64.StdEncoding.DecodeString(n.Content)
 	if err != nil {
-		return "", err
+		// fallback: treat as raw text
+		return n.Content, nil
 	}
 	return string(data), nil
 }

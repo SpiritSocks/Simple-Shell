@@ -65,6 +65,30 @@ func ExecInput(input string) error {
 		}
 		return nil
 
+	case "wc":
+		if len(args) < 2 {
+			fmt.Println("usage: wc <file>")
+			return nil
+		}
+		path := strings.Join(args[1:], " ")
+		node, _, err := vfs.Resolve(path)
+		if err != nil {
+			return fmt.Errorf("wc: %v", err)
+		}
+		if node.IsDir {
+			return fmt.Errorf("wc: %s is a directory", path)
+		}
+		content, err := vfs.DecodeFile(node)
+		if err != nil {
+			return fmt.Errorf("wc: %v", err)
+		}
+		lines := strings.Count(content, "\n")
+		words := len(strings.Fields(content))
+		bytes := len([]byte(content))
+
+		fmt.Printf("%d %d %d %s\n", lines, words, bytes, path)
+		return nil
+
 	case "exit":
 		os.Exit(0)
 	}
@@ -77,6 +101,7 @@ func ExecInput(input string) error {
 
 // ExecScript: выполнить стартовый скрипт с эхо и остановкой на первой ошибке
 func ExecScript(scriptPath, prompt string) error {
+
 	f, err := os.Open(scriptPath)
 	if err != nil {
 		return fmt.Errorf("script: %w", err)
@@ -89,6 +114,10 @@ func ExecScript(scriptPath, prompt string) error {
 		lineNo++
 		line := sc.Text()
 		if strings.TrimSpace(line) == "" {
+			continue
+		}
+
+		if strings.TrimSpace(prompt) == "" || strings.HasPrefix(strings.TrimSpace(prompt), "#") {
 			continue
 		}
 
