@@ -13,7 +13,7 @@
             "hello.txt": {
               "name": "hello.txt",
               "is_dir": false,
-              "content": "SGVsbG8gd29ybGQh" 
+              "content": "Hello vfs world!" 
             }
           }
         }
@@ -26,9 +26,10 @@
         "conf.txt": {
           "name": "conf.txt",
           "is_dir": false,
-          "content": "Q29uZmlndXJhdGlvbiBmaWxl" 
+          "content": "Bye vfs world!" 
         }
       }
     }
   }
 }
+

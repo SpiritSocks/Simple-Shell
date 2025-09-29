@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// parseArgs: поддержка кавычек и экранирования (\")
+// parseArgs: поддержка кавычек и экранирования
 func parseArgs(input string) ([]string, error) {
 	var args []string
 	var cur strings.Builder

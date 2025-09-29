@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	// Этап 2+3: флаги
+
 	var vfsPath string
 	var scriptPath string
 	flag.StringVar(&vfsPath, "vfs", "", "Path to physical VFS directory")
@@ -55,3 +55,6 @@ func main() {
 		}
 	}
 }
+
+//go run ./cmd/emulator --vfs ./vfs/vfs.json --script ./script/start.sh
+//go run ./cmd/emulator --vfs ./vfs/vfs.json --script ./script/stage4.sh
