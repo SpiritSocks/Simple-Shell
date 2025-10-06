@@ -14,5 +14,5 @@ pwd
 ls
 wc /home/user/hello.txt
 wc /etc/conf.txt
-wc /home      # должно выдать ошибку
-wc /no/such/file   # тоже ошибка
+wc /home  
+wc /no/such/file

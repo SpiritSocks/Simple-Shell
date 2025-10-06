@@ -56,5 +56,5 @@ func main() {
 	}
 }
 
-//go run ./cmd/emulator --vfs ./vfs/vfs.json --script ./script/start.sh
-//go run ./cmd/emulator --vfs ./vfs/vfs.json --script ./script/stage4.sh
+//go run ./cmd/emulator --vfs ./vfs/vfs.csv --script ./script/start.sh
+//go run ./cmd/emulator --vfs ./vfs/vfs.csv --script ./script/stage4.sh

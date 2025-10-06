@@ -1,0 +1,7 @@
+path,type,content
+/,dir,
+/home,dir,
+/home/user,dir,
+/home/user/hello.txt,file,Hello vfs world!
+/etc,dir,
+/etc/conf.txt,file,Bye vfs world!
