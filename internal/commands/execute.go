@@ -10,7 +10,6 @@ import (
 	"var27_shell/internal/vfs"
 )
 
-// GetHostAndUser -> (username, hostname) для приглашения
 func GetHostAndUser() (string, string) {
 	u, err := osuser.Current()
 	if err != nil {
@@ -92,7 +91,6 @@ func ExecInput(input string) error {
 	case "exit":
 		os.Exit(0)
 	}
-	// остальные — хостовые команды
 	cmd := exec.Command(args[0], args[1:]...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
